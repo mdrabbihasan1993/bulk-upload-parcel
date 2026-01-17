@@ -12,6 +12,7 @@ export interface Parcel {
   recipientName: string;
   address: string;
   phone: string;
+  codAmount: number;
   weight: number; // in kg
   note: string;
   serviceType: 'Standard' | 'Express' | 'Overnight';
