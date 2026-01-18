@@ -21,7 +21,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onBatchComplete }) => {
   const allowedPrefixes = ['017', '013', '016', '018', '019', '014', '015'];
 
   const hasDuplicates = useMemo(() => {
-    const ids = parcels.map(p => p.invoiceId.trim()).filter(id => id !== "");
+    const ids = parcels.map(p => (p.invoiceId || '').trim()).filter(id => id !== "");
     return new Set(ids).size !== ids.length;
   }, [parcels]);
 
@@ -33,7 +33,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onBatchComplete }) => {
     const headers = ["Invoice ID", "Recipient Name", "Phone Number", "Full Address", "COD Amount", "Weight (kg)", "Note"];
     const sampleData = [
       ["INV-1001", "Abdur Rahman", "01712345678", "House 12, Road 5, Dhanmondi, Dhaka", "1500", "1.5", "Handle with care"],
-      ["INV-1002", "Sumaiya Akter", "01811223344", "Plot 45, Sector 7, Uttara, Dhaka", "0", "0.5", "Fragile - Deliver after 5 PM"],
+      ["", "Sumaiya Akter", "01811223344", "Plot 45, Sector 7, Uttara, Dhaka", "0", "0.5", "Fragile - Deliver after 5 PM"],
       ["INV-1003", "Karim Mia", "01912334455", "Shop 4, Market Road, Chittagong", "550", "2.2", "Deliver to reception"]
     ];
 
@@ -160,13 +160,15 @@ const UploadPage: React.FC<UploadPageProps> = ({ onBatchComplete }) => {
 
     const idCounts: Record<string, number> = {};
     initialParcels.forEach(p => {
-      if (p.invoiceId) {
-        idCounts[p.invoiceId] = (idCounts[p.invoiceId] || 0) + 1;
+      const tid = (p.invoiceId || '').trim();
+      if (tid) {
+        idCounts[tid] = (idCounts[tid] || 0) + 1;
       }
     });
 
     return initialParcels.map(p => {
-      if (p.invoiceId && idCounts[p.invoiceId] > 1) {
+      const tid = (p.invoiceId || '').trim();
+      if (tid && idCounts[tid] > 1) {
         return { 
           ...p, 
           status: ParcelStatus.WARNING, 
@@ -221,12 +223,14 @@ const UploadPage: React.FC<UploadPageProps> = ({ onBatchComplete }) => {
       
       const idCounts: Record<string, number> = {};
       filtered.forEach(p => {
-        if (p.invoiceId) idCounts[p.invoiceId] = (idCounts[p.invoiceId] || 0) + 1;
+        const tid = (p.invoiceId || '').trim();
+        if (tid) idCounts[tid] = (idCounts[tid] || 0) + 1;
       });
 
       return filtered.map(p => {
+        const tid = (p.invoiceId || '').trim();
         const isCurrentlyMarkedDuplicate = p.statusMessage === 'Duplicate Invoice ID';
-        const isStillDuplicate = p.invoiceId && idCounts[p.invoiceId] > 1;
+        const isStillDuplicate = tid && idCounts[tid] > 1;
 
         if (isCurrentlyMarkedDuplicate && !isStillDuplicate) {
           const isInvalidPhone = !validatePhone(p.phone);

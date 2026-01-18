@@ -54,16 +54,19 @@ const ParcelTable: React.FC<ParcelTableProps> = ({ parcels, setParcels, onRemove
       // Re-run all validations (Duplicates, Phone, Fields)
       const idCounts: Record<string, number> = {};
       next.forEach(p => {
-        if (p.invoiceId) idCounts[p.invoiceId] = (idCounts[p.invoiceId] || 0) + 1;
+        const tid = (p.invoiceId || '').trim();
+        if (tid) idCounts[tid] = (idCounts[tid] || 0) + 1;
       });
 
       return next.map(p => {
         let status = ParcelStatus.VALID;
         let statusMessage: string | undefined = undefined;
 
-        const isDuplicate = p.invoiceId && idCounts[p.invoiceId] > 1;
+        const tid = (p.invoiceId || '').trim();
+        const isDuplicate = tid && idCounts[tid] > 1;
         const isInvalidPhone = !validatePhone(p.phone);
-        const isMissingFields = !p.invoiceId || !p.recipientName || !p.address || p.weight <= 0;
+        // Removed !p.invoiceId from mandatory check
+        const isMissingFields = !p.recipientName || !p.address || p.weight <= 0;
 
         if (isDuplicate) {
           status = ParcelStatus.WARNING;
@@ -117,7 +120,6 @@ const ParcelTable: React.FC<ParcelTableProps> = ({ parcels, setParcels, onRemove
           {parcels.map((parcel, index) => {
             const isDuplicate = parcel.statusMessage === 'Duplicate Invoice ID';
             const isPhoneError = parcel.statusMessage === 'Invalid Operator/Length';
-            const isMissingError = parcel.statusMessage === 'Missing Required Fields';
             
             return (
               <tr key={parcel.id} className={`group transition-colors ${isDuplicate ? 'bg-amber-50/60' : parcel.status === ParcelStatus.ERROR ? 'bg-red-50/20' : index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} hover:bg-slate-100/50`}>
@@ -128,16 +130,11 @@ const ParcelTable: React.FC<ParcelTableProps> = ({ parcels, setParcels, onRemove
                       value={parcel.invoiceId || ''}
                       onChange={(e) => updateParcel(parcel.id, { invoiceId: e.target.value })}
                       className={inputClasses(parcel.invoiceId, "font-mono font-bold text-dark-blue", false, isDuplicate)}
-                      placeholder="INV-0000"
+                      placeholder="Optional ID"
                     />
                     {isDuplicate && (
                       <span className="text-[10px] text-amber-600 font-black px-1 flex items-center uppercase tracking-tighter">
                         <span className="mr-1">⚠</span> Duplicate ID
-                      </span>
-                    )}
-                    {isFieldMissing(parcel.invoiceId) && !isDuplicate && (
-                      <span className="text-[10px] text-red-500 font-bold px-1 flex items-center">
-                        <span className="mr-1">⚠</span> ID Missing
                       </span>
                     )}
                   </div>
